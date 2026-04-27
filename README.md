@@ -1,6 +1,6 @@
 # ⚡ PokeNext Pokedex
 
-![PokeNext Banner](file:///C:/Users/AORUS/.gemini/antigravity/brain/cdff1f9d-1436-4a88-8e0b-c47c453d7e32/pokedex_banner_1777313369186.png)
+![PokeNext Banner](./public/pokedex_banner.png)
 
 Una aplicación moderna, rápida y visualmente impactante para explorar el mundo Pokémon. Construida con las últimas tecnologías web para ofrecer una experiencia de usuario premium con estética futurista y efectos de glassmorphism.
 
@@ -60,4 +60,4 @@ poke-next/
 
 ---
 
-Desarrollado con ❤️ por el equipo de Lenguajes de Progrmacion Brian, Leo (no hizo nada xd) y Samuel (menos xd).
+Desarrollado con ❤️ por el equipo de Lenguajes de Programacion Brian, Leo (no hizo nada xd) y Samuel (menos xd).
