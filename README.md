@@ -39,8 +39,12 @@ Sigue estos pasos para ejecutar el proyecto localmente:
    ```bash
    npm run dev
    ```
+   o
+      ```bash
+   npm start
+   ```
 
-4. **Ver el resultado**:
+5. **Ver el resultado**:
    Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
 ## 📂 Estructura del Proyecto
