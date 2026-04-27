@@ -65,3 +65,8 @@ poke-next/
 ---
 
 Desarrollado con ❤️ por el equipo de Lenguajes de Programacion Brian, Leo (no hizo nada xd) y Samuel (menos xd).
+
+
+# YO SI TRABAJE PROFE NO LE HAGA CASO A BRIAN 
+
+SAMUEL EFECTIVAMENTE NO HA HECHO NADA XD

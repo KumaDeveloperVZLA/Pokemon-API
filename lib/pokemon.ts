@@ -59,6 +59,21 @@ export type PokemonDetail = PokemonListItem & {
   stats: PokemonStat[];
 };
 
+export type PokemonSuggestion = { /*tipo de datos exportado para sugerencia*/
+  name: string;
+  id: string;
+};
+
+export type PokemonType = { //tipo de pokemones
+  name: string;
+  url: string;
+};
+
+export type PokemonGeneration = { //generacion de pokemones
+  name: string;
+  url: string;
+};
+
 const STAT_LABELS: Record<string, string> = {
   hp: "HP",
   attack: "Ataque",
@@ -203,4 +218,85 @@ export async function getPokemonById(
   }
 
   return mapPokemonDetail(response);
+}
+
+
+
+/*
+
+estas funciones trabajan con el fetch all de la api para las sugerencias de
+pokemones, tipos y la generacion
+
+*/
+
+export async function getAllPokemonSuggestions(): Promise<PokemonSuggestion[]> {
+  const response = await fetchFromPokeApi<PokemonListResponse>(
+    "/pokemon?limit=2000",
+  );
+
+  if (!response) {
+    return [];
+  }
+
+  return response.results.map((pokemon) => ({
+    name: formatPokemonName(pokemon.name),
+    id: String(extractPokemonId(pokemon.url)),
+  }));
+}
+
+export async function getPokemonTypes(): Promise<PokemonType[]> {
+  const response = await fetchFromPokeApi<{ results: PokemonType[] }>("/type");
+  return response?.results ?? [];
+}
+
+export async function getPokemonGenerations(): Promise<PokemonGeneration[]> {
+  const response = await fetchFromPokeApi<{ results: PokemonGeneration[] }>(
+    "/generation",
+  );
+  return response?.results ?? [];
+}
+
+export async function getPokemonByType(type: string): Promise<PokemonListItem[]> {
+  const response = await fetchFromPokeApi<{ pokemon: Array<{ pokemon: { name: string, url: string } }> }>(
+    `/type/${type}`,
+  );
+
+  if (!response) return [];
+
+  const pokemonDetails = await Promise.allSettled(
+    response.pokemon.slice(0, 52).map(async (p) => {
+      const pokemonId = extractPokemonId(p.pokemon.url);
+      const detail = await fetchFromPokeApi<PokemonDetailResponse>(
+        `/pokemon/${pokemonId}`,
+      );
+      return detail ? mapPokemonListItem(detail) : null;
+    }),
+  );
+
+  return pokemonDetails.flatMap((result) =>
+    result.status === "fulfilled" && result.value ? [result.value] : []
+  );
+}
+
+export async function getPokemonByGeneration(gen: string): Promise<PokemonListItem[]> {
+  const response = await fetchFromPokeApi<{ pokemon_species: Array<{ name: string, url: string }> }>(
+    `/generation/${gen}`,
+  );
+
+  if (!response) return [];
+
+  const pokemonDetails = await Promise.allSettled(
+    response.pokemon_species.slice(0, 52).map(async (p) => {
+      // Nota: pokemon_species usa el mismo ID que pokemon
+      const pokemonId = extractPokemonId(p.url);
+      const detail = await fetchFromPokeApi<PokemonDetailResponse>(
+        `/pokemon/${pokemonId}`,
+      );
+      return detail ? mapPokemonListItem(detail) : null;
+    }),
+  );
+
+  return pokemonDetails.flatMap((result) =>
+    result.status === "fulfilled" && result.value ? [result.value] : []
+  );
 }
