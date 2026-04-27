@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { PokemonTypeBadge } from "@/components/pokemon-type-badge";
 import type { PokemonListItem } from "@/lib/pokemon";
 
 type PokemonCardProps = {
@@ -9,7 +10,7 @@ type PokemonCardProps = {
 export function PokemonCard({ pokemon }: PokemonCardProps) {
   return (
     <Link
-      href={`/pokemon/${pokemon.id}`}
+      href={`/pokemon/${pokemon.routeId}`}
       className="group overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/5 p-5 shadow-xl shadow-slate-950/20 transition duration-200 hover:-translate-y-1 hover:border-cyan-300/40 hover:bg-white/8"
     >
       <div className="flex items-start justify-between gap-4">
@@ -34,6 +35,12 @@ export function PokemonCard({ pokemon }: PokemonCardProps) {
           height={240}
           className="mx-auto h-44 w-44 transition duration-300 group-hover:scale-105"
         />
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {pokemon.types.map((type) => (
+          <PokemonTypeBadge key={type} type={type} variant="minimal" />
+        ))}
       </div>
     </Link>
   );

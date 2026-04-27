@@ -21,15 +21,23 @@ const TYPE_STYLES: Record<string, string> = {
 
 type PokemonTypeBadgeProps = {
   type: string;
+  variant?: "default" | "minimal";
 };
 
-export function PokemonTypeBadge({ type }: PokemonTypeBadgeProps) {
+export function PokemonTypeBadge({
+  type,
+  variant = "default",
+}: PokemonTypeBadgeProps) {
   const className =
     TYPE_STYLES[type] ?? "border-white/20 bg-white/10 text-white";
+  const variantClassName =
+    variant === "minimal"
+      ? "px-2.5 py-1 text-[0.65rem] tracking-[0.18em]"
+      : "px-3 py-1 text-xs tracking-[0.25em]";
 
   return (
     <span
-      className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] ${className}`}
+      className={`rounded-full border font-semibold uppercase ${variantClassName} ${className}`}
     >
       {type}
     </span>

@@ -39,8 +39,10 @@ type PokemonDetailResponse = {
 
 export type PokemonListItem = {
   id: string;
+  routeId: string;
   name: string;
   image: string;
+  types: string[];
 };
 
 export type PokemonStat = {
@@ -111,9 +113,20 @@ function extractPokemonId(url: string) {
   return Number(match[1]);
 }
 
+function normalizePokemonIdentifier(value: string | number) {
+  const normalizedValue = String(value).trim().toLowerCase();
+
+  if (/^\d+$/.test(normalizedValue)) {
+    return String(Number(normalizedValue));
+  }
+
+  return normalizedValue;
+}
+
 function mapPokemonDetail(pokemon: PokemonDetailResponse): PokemonDetail {
   return {
     id: formatPokemonId(pokemon.id),
+    routeId: String(pokemon.id),
     name: formatPokemonName(pokemon.name),
     image:
       pokemon.sprites.other?.["official-artwork"]?.front_default ??
@@ -132,7 +145,19 @@ function mapPokemonDetail(pokemon: PokemonDetailResponse): PokemonDetail {
   };
 }
 
-export async function getPokemonList(limit = 24): Promise<PokemonListItem[]> {
+function mapPokemonListItem(pokemon: PokemonDetailResponse): PokemonListItem {
+  return {
+    id: formatPokemonId(pokemon.id),
+    routeId: String(pokemon.id),
+    name: formatPokemonName(pokemon.name),
+    image:
+      pokemon.sprites.other?.["official-artwork"]?.front_default ??
+      getPokemonImage(pokemon.id),
+    types: pokemon.types.map((type) => type.type.name),
+  };
+}
+
+export async function getPokemonList(limit = 52): Promise<PokemonListItem[]> {
   const response = await fetchFromPokeApi<PokemonListResponse>(
     `/pokemon?limit=${limit}`,
   );
@@ -141,22 +166,36 @@ export async function getPokemonList(limit = 24): Promise<PokemonListItem[]> {
     return [];
   }
 
-  return response.results.map((pokemon) => {
-    const pokemonId = extractPokemonId(pokemon.url);
+  const pokemonDetails = await Promise.allSettled(
+    response.results.map(async (pokemon) => {
+      const pokemonId = extractPokemonId(pokemon.url);
+      const detail = await fetchFromPokeApi<PokemonDetailResponse>(
+        `/pokemon/${pokemonId}`,
+      );
 
-    return {
-      id: formatPokemonId(pokemonId),
-      name: formatPokemonName(pokemon.name),
-      image: getPokemonImage(pokemonId),
-    };
+      if (!detail) {
+        return null;
+      }
+
+      return mapPokemonListItem(detail);
+    }),
+  );
+
+  return pokemonDetails.flatMap((result) => {
+    if (result.status === "fulfilled" && result.value) {
+      return [result.value];
+    }
+
+    return [];
   });
 }
 
 export async function getPokemonById(
   id: string | number,
 ): Promise<PokemonDetail | null> {
+  const normalizedId = normalizePokemonIdentifier(id);
   const response = await fetchFromPokeApi<PokemonDetailResponse>(
-    `/pokemon/${id}`,
+    `/pokemon/${normalizedId}`,
   );
 
   if (!response) {
