@@ -119,10 +119,11 @@ function getPokemonImage(id: number | string) {
 }
 
 function extractPokemonId(url: string) {
-  const match = url.match(/\/pokemon\/(\d+)\/?$/);
+  // Buscamos el numero al final de la URL, sin importar el prefijo
+  const match = url.match(/\/(\d+)\/?$/);
 
   if (!match) {
-    throw new Error(`Unable to extract pokemon id from ${url}`);
+    throw new Error(`Unable to extract id from ${url}`);
   }
 
   return Number(match[1]);
@@ -285,12 +286,16 @@ export async function getPokemonByGeneration(gen: string): Promise<PokemonListIt
 
   if (!response) return [];
 
+  // Extraemos los IDs y ordenamos para que la lista tenga sentido (del 1 en adelante)
+  const sortedSpecies = response.pokemon_species
+    .map((p) => ({ ...p, id: extractPokemonId(p.url) }))
+    .sort((a, b) => a.id - b.id)
+    .slice(0, 52); // Limitamos a los primeros 52 por rendimiento
+
   const pokemonDetails = await Promise.allSettled(
-    response.pokemon_species.slice(0, 52).map(async (p) => {
-      // Nota: pokemon_species usa el mismo ID que pokemon
-      const pokemonId = extractPokemonId(p.url);
+    sortedSpecies.map(async (p) => {
       const detail = await fetchFromPokeApi<PokemonDetailResponse>(
-        `/pokemon/${pokemonId}`,
+        `/pokemon/${p.id}`,
       );
       return detail ? mapPokemonListItem(detail) : null;
     }),
