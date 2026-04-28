@@ -25,7 +25,10 @@ export function PokemonFilters({ types, generations }: PokemonFiltersProps) {
     } else {
       params.delete(key);
     }
-    router.push(`/?${params.toString()}`);
+    // Siempre reiniciamos la paginación cuando cambia el filtro
+    params.delete("page");
+    const query = params.toString();
+    router.push(query ? `/?${query}` : "/");
   }
 
   return (

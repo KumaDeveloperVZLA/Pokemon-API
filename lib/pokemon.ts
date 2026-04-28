@@ -1,6 +1,7 @@
 const POKE_API_BASE_URL = "https://pokeapi.co/api/v2";
 
 type PokemonListResponse = {
+  count: number;
   results: Array<{
     name: string;
     url: string;
@@ -43,6 +44,13 @@ export type PokemonListItem = {
   name: string;
   image: string;
   types: string[];
+};
+
+export type PaginatedPokemonResponse = {
+  pokemons: PokemonListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
 };
 
 export type PokemonStat = {
@@ -173,13 +181,17 @@ function mapPokemonListItem(pokemon: PokemonDetailResponse): PokemonListItem {
   };
 }
 
-export async function getPokemonList(limit = 52): Promise<PokemonListItem[]> {
+export async function getPokemonList(
+  page = 1,
+  limit = 52,
+): Promise<PaginatedPokemonResponse> {
+  const offset = (page - 1) * limit;
   const response = await fetchFromPokeApi<PokemonListResponse>(
-    `/pokemon?limit=${limit}`,
+    `/pokemon?limit=${limit}&offset=${offset}`,
   );
 
   if (!response) {
-    return [];
+    return { pokemons: [], total: 0, page, pageSize: limit };
   }
 
   const pokemonDetails = await Promise.allSettled(
@@ -197,13 +209,17 @@ export async function getPokemonList(limit = 52): Promise<PokemonListItem[]> {
     }),
   );
 
-  return pokemonDetails.flatMap((result) => {
-    if (result.status === "fulfilled" && result.value) {
-      return [result.value];
-    }
-
-    return [];
-  });
+  return {
+    pokemons: pokemonDetails.flatMap((result) => {
+      if (result.status === "fulfilled" && result.value) {
+        return [result.value];
+      }
+      return [];
+    }),
+    total: response.count,
+    page,
+    pageSize: limit,
+  };
 }
 
 export async function getPokemonById(
@@ -257,15 +273,25 @@ export async function getPokemonGenerations(): Promise<PokemonGeneration[]> {
   return response?.results ?? [];
 }
 
-export async function getPokemonByType(type: string): Promise<PokemonListItem[]> {
-  const response = await fetchFromPokeApi<{ pokemon: Array<{ pokemon: { name: string, url: string } }> }>(
-    `/type/${type}`,
-  );
+export async function getPokemonByType(
+  type: string,
+  page = 1,
+  limit = 8,
+): Promise<PaginatedPokemonResponse> {
+  const response = await fetchFromPokeApi<{
+    pokemon: Array<{ pokemon: { name: string; url: string } }>;
+  }>(`/type/${type}`);
 
-  if (!response) return [];
+  if (!response) {
+    return { pokemons: [], total: 0, page, pageSize: limit };
+  }
+
+  const total = response.pokemon.length;
+  const offset = (page - 1) * limit;
+  const pageItems = response.pokemon.slice(offset, offset + limit);
 
   const pokemonDetails = await Promise.allSettled(
-    response.pokemon.slice(0, 52).map(async (p) => {
+    pageItems.map(async (p) => {
       const pokemonId = extractPokemonId(p.pokemon.url);
       const detail = await fetchFromPokeApi<PokemonDetailResponse>(
         `/pokemon/${pokemonId}`,
@@ -274,26 +300,39 @@ export async function getPokemonByType(type: string): Promise<PokemonListItem[]>
     }),
   );
 
-  return pokemonDetails.flatMap((result) =>
-    result.status === "fulfilled" && result.value ? [result.value] : []
-  );
+  return {
+    pokemons: pokemonDetails.flatMap((result) =>
+      result.status === "fulfilled" && result.value ? [result.value] : [],
+    ),
+    total,
+    page,
+    pageSize: limit,
+  };
 }
 
-export async function getPokemonByGeneration(gen: string): Promise<PokemonListItem[]> {
-  const response = await fetchFromPokeApi<{ pokemon_species: Array<{ name: string, url: string }> }>(
-    `/generation/${gen}`,
-  );
+export async function getPokemonByGeneration(
+  gen: string,
+  page = 1,
+  limit = 8,
+): Promise<PaginatedPokemonResponse> {
+  const response = await fetchFromPokeApi<{
+    pokemon_species: Array<{ name: string; url: string }>;
+  }>(`/generation/${gen}`);
 
-  if (!response) return [];
+  if (!response) {
+    return { pokemons: [], total: 0, page, pageSize: limit };
+  }
 
-  // Extraemos los IDs y ordenamos para que la lista tenga sentido (del 1 en adelante)
   const sortedSpecies = response.pokemon_species
     .map((p) => ({ ...p, id: extractPokemonId(p.url) }))
-    .sort((a, b) => a.id - b.id)
-    .slice(0, 52); // Limitamos a los primeros 52 por rendimiento
+    .sort((a, b) => a.id - b.id);
+
+  const total = sortedSpecies.length;
+  const offset = (page - 1) * limit;
+  const pageItems = sortedSpecies.slice(offset, offset + limit);
 
   const pokemonDetails = await Promise.allSettled(
-    sortedSpecies.map(async (p) => {
+    pageItems.map(async (p) => {
       const detail = await fetchFromPokeApi<PokemonDetailResponse>(
         `/pokemon/${p.id}`,
       );
@@ -301,7 +340,12 @@ export async function getPokemonByGeneration(gen: string): Promise<PokemonListIt
     }),
   );
 
-  return pokemonDetails.flatMap((result) =>
-    result.status === "fulfilled" && result.value ? [result.value] : []
-  );
+  return {
+    pokemons: pokemonDetails.flatMap((result) =>
+      result.status === "fulfilled" && result.value ? [result.value] : [],
+    ),
+    total,
+    page,
+    pageSize: limit,
+  };
 }
