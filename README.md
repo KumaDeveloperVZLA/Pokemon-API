@@ -70,3 +70,26 @@ Desarrollado con ❤️ por el equipo de Lenguajes de Programacion Brian, Leo (n
 # YO SI TRABAJE PROFE NO LE HAGA CASO A BRIAN 
 
 SAMUEL EFECTIVAMENTE NO HA HECHO NADA XD
+
+PD: Soy Brian, efectivamente al final si trabajaron xd (Samuel tambien, increiblemente).
+---
+
+## Interfaz y casos de uso para mi profe bella
+
+### 1. Interfaz del home y filtros
+![home1](./public/home1.png)
+
+### 2. Interfaz de cómo se listan pokemones y paginación
+![home2](./public/home2.png)
+
+### 3. Uso de filtros desde home
+![filtro-agua](./public/filtro-agua.png)
+
+### 4. Uso de la barra de búsqueda por ID de Pokedex
+![busqueda-id](./public/busqueda-id.png)
+
+### 5. Uso de la barra de búsqueda por nombre del pokemon
+![busqueda-nombre](./public/busqueda-nombre.png)
+
+### 6. Interfaz del detalle del pokemon
+![detalle-pokemon](./public/detalle-pokemon.png)
